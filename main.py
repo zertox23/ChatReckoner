@@ -11,12 +11,22 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
 
+
+
+
+
+
+
+session = BotDb().session
+
+
 class utils:
+    @staticmethod
     def get_all_members() -> list:  # gets the necessary data to make a DbStruct.member object
         members_info = []
         for member in bot.get_all_members():
             roles = member.roles
-            for role in roles:  
+            for role in roles:
                 if role.name in tiers:
                     rank = str(role.name)
                     ic(rank)
@@ -25,6 +35,8 @@ class utils:
                     rank = "Not Applied"
             members_info.append({member.id: {"username": member.name, "rank": rank}})
         return members_info
+
+    @staticmethod
     def update_members():
         for item in utils.get_all_members():
             discord_id = (list(item.keys()))[0]
@@ -68,14 +80,6 @@ class utils:
         else:
             logger.error(f"discord_id [{discord_id}] not found")
             return False
-
-
-
-
-
-session = BotDb().session
-
-
 
 
 @bot.event
@@ -126,6 +130,20 @@ async def decrement_votes(interaction: discord.Interaction,user:discord.Member,n
     except Exception as e:
         await interaction.response.send_message(f"Failed. {e}")
 
+@bot.tree.command(name="show_user_info")
+@app_commands.describe(user="user to display info of")
+async def show_user_info(interaction:discord.Interaction,user:discord.Member):
+    member = session.query(DbStruct.member).filter(DbStruct.member.user_id == user.id).first()
+    if member:
+        embed = discord.Embed(title="User Info Request",color= discord.Color.random())
+        embed.add_field(name="User Id",value=str(member.user_id), inline=False)
+        embed.add_field(name="Username",value=str(member.username), inline=False)
+        embed.add_field(name="Rank",value=str(member.rank), inline=False)
+        embed.add_field(name="Current Votes",value=str(member.votes), inline=False)
+        embed.add_field(name="messages Sent",value=str(member.messages_sent), inline=False)
+        await interaction.response.send_message(embed=embed)
+    else:
+        await interaction.response.send_message(f"User Not Found 404")
 
 
 
@@ -134,4 +152,4 @@ class Ranks:
         pass
 
 
-bot.run("MTE0NjY1MDQwNTQ2ODY0MzQyOA.GDUVOF.D7wScdQsucCtL5MxBBIo8LSxzaJZf5EH9pHOYA")
+bot.run("MTE0NjY1MDQwNTQ2ODY0MzQyOA.GuDU3-.67y41D0Pn4K-Gd1vgCJnlujm49EimnDDhCXeM4")

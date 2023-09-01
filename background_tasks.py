@@ -11,11 +11,13 @@ class BackgroundTasks(commands.Cog):
         self.check_votes.start()
         self.check_polls.start()
         self.update_users_votes.start()
+        self.update_members.start()
 
     def cog_unload(self) -> None:
         self.check_votes.stop()
         self.check_polls.stop()
         self.update_users_votes.stop()
+        self.update_members.stop()
 
     @tasks.loop(seconds=2)
     async def check_votes(self):
@@ -99,6 +101,20 @@ class BackgroundTasks(commands.Cog):
                 member.votes += poll.votes
                 poll.last_recorded = poll.votes
             session.commit()
+
+    @tasks.loop(seconds=1)
+    async def update_members(self):
+            members_info = []
+            for member in self.bot.get_all_members():
+                roles = member.roles
+                for role in roles:
+                    if role.name in tiers:
+                        rank = str(role.name)
+                        ic(rank)
+                        break
+                    else:
+                        rank = "Not Applied"
+                members_info.append({member.id: {"username": member.name, "rank": rank}})
 
 
 
