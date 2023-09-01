@@ -87,6 +87,7 @@ async def on_ready():
     print("Bot is up and ready!")
     await bot.load_extension("background_tasks")
     await bot.load_extension("rankpoll")
+    await bot.load_extension("discussions")
     try:
         synced = await bot.tree.sync()
         print(f"synced {len(synced)} command[s]")
@@ -130,6 +131,47 @@ async def decrement_votes(interaction: discord.Interaction,user:discord.Member,n
     except Exception as e:
         await interaction.response.send_message(f"Failed. {e}")
 
+@bot.tree.command(name="derank")
+@app_commands.describe(user="user to derank")
+@commands.has_permissions(administrator=True)
+async def derank(interaction:discord.Interaction,user:discord.Member):
+    dis_member = bot.get_guild(Guild).get_member(user.id)
+    roles = dis_member.roles
+    for role in roles:
+        if role.name in tiers:
+            rank = str(role.name)
+            current_role_index = tiers.index(str(rank))
+            next_role_index = current_role_index - 1
+            if next_role_index < 0:
+                pass
+            else:
+                await dis_member.add_roles(discord.utils.get(bot.get_guild(Guild).roles, name=str(
+                    tiers[next_role_index])))  # Give lower Rank
+                await dis_member.remove_roles(discord.utils.get(bot.get_guild(Guild).roles, name=str(
+                    tiers[current_role_index])))  # Remove last Rank
+                await interaction.response.send_message(f"Deranked {user.mention} successfully")
+
+@bot.tree.command(name="uprank")
+@app_commands.describe(user="user to uprank")
+@commands.has_permissions(administrator=True)
+async def uprank(interaction:discord.Interaction,user:discord.Member):
+    dis_member = bot.get_guild(Guild).get_member(user.id)
+    roles = dis_member.roles
+    for role in roles:
+        if role.name in tiers:
+            rank = str(role.name)
+            current_role_index = tiers.index(str(rank))
+            next_role_index = current_role_index + 1
+            if len(tiers) <= next_role_index:
+                pass
+            else:
+                await dis_member.add_roles(discord.utils.get(bot.get_guild(Guild).roles,
+                                                             name=str(tiers[next_role_index])))  # Give Next Rank
+                await dis_member.remove_roles(discord.utils.get(bot.get_guild(Guild).roles, name=str(
+                    tiers[current_role_index])))  # Remove last Rank
+                await interaction.response.send_message(f"upranked {user.mention} successfully")
+
+
 @bot.tree.command(name="show_user_info")
 @app_commands.describe(user="user to display info of")
 async def show_user_info(interaction:discord.Interaction,user:discord.Member):
@@ -152,4 +194,4 @@ class Ranks:
         pass
 
 
-bot.run("MTE0NjY1MDQwNTQ2ODY0MzQyOA.GuDU3-.67y41D0Pn4K-Gd1vgCJnlujm49EimnDDhCXeM4")
+bot.run("MTE0NjY1MDQwNTQ2ODY0MzQyOA.GP4F0r.U6dVq5Fe258pnkftndMkgrejn9y07W7NagKpQk")

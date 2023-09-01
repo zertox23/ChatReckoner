@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, ForeignKey, Column, String, Integer,DateTime
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+import datetime
 
 global base
 Base = declarative_base()
@@ -55,6 +56,27 @@ class DbStruct:
                 "last_recorded":self.last_recorded,
                 "voted_user":self.voted_user
             })
+
+    class discussion_ideas(Base):
+        __tablename__ = "discussion_ideas"
+        id       = Column("id", String, primary_key=True)  # message link
+        votes    = Column("votes",Integer)
+        submitted_by = Column("submitted_by",Integer,ForeignKey("members.user_id"))
+        submittion_date = Column("submission_date", DateTime, default=datetime.datetime.utcnow)
+
+        def __init__(self,id:str,submitted_by:int,votes:int=0):
+            self.id = id
+            self.submitted_by = submitted_by
+            self.votes = votes
+
+        def __repr__(self):
+            return str({
+                "id": self.id,
+                "votes": self.votes,
+                "submitted_by":self.submitted_by,
+                "submission_date": self.submittion_date,
+            })
+
     
 class BotDb:
     def __init__(self) -> None: 

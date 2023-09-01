@@ -25,6 +25,7 @@ class RankPoll(commands.Cog):
             await dm.send("You Cant make a poll about yourself")
 
         else:
+            interaction.response.send_mesasge("Poll Submitted.waiting for admin approval", ephemeral=True)
             channel = self.bot.get_channel(admin_tier_submit)
             embed = discord.Embed(title="Rank Poll Submission", color=discord.Color.random())
             embed.add_field(name="Poll Submitted by", value=interaction.user.mention, inline=False)
