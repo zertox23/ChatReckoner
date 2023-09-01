@@ -4,6 +4,7 @@ from db import  DbStruct,BotDb
 from Config import *
 session = BotDb().session
 from icecream import ic
+import time
 class BackgroundTasks(commands.Cog):
 
     def __init__(self,bot:discord.Client):
@@ -13,13 +14,14 @@ class BackgroundTasks(commands.Cog):
         self.update_users_votes.start()
         self.update_members.start()
         self.check_discussion_submissions.start()
-
+        self.db_backup.start()
     def cog_unload(self) -> None:
         self.check_votes.stop()
         self.check_polls.stop()
         self.update_users_votes.stop()
         self.update_members.stop()
         self.check_discussion_submissions.stop()
+        self.db_backup.stop()
 
     @tasks.loop(seconds=2)
     async def check_votes(self):
@@ -159,7 +161,15 @@ class BackgroundTasks(commands.Cog):
                 session.add(member)
                 session.commit()
 
-
+    @tasks.loop(seconds=720)
+    async def db_backup(self):
+        time.sleep(5)
+        try:
+            ic("Uploading Backup")
+            channel = self.bot.get_channel(db_backup_channel)
+            await channel.send(file=discord.File('database.db'))
+        except Exception as e:
+            ic("Error uploading backup:", e)
 
 
 async def setup(bot):

@@ -80,7 +80,7 @@ class DbStruct:
     
 class BotDb:
     def __init__(self) -> None: 
-        engine = create_engine("sqlite:///database/databse.db")
+        engine = create_engine("sqlite:///database.db")
         Base.metadata.create_all(bind=engine)
         Session = sessionmaker(bind=engine)
         self.session = Session()

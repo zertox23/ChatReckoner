@@ -194,4 +194,4 @@ class Ranks:
         pass
 
 
-bot.run("MTE0NjY1MDQwNTQ2ODY0MzQyOA.GP4F0r.U6dVq5Fe258pnkftndMkgrejn9y07W7NagKpQk")
+bot.run("TOKEN")

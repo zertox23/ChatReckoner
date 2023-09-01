@@ -5,6 +5,7 @@ tier_submit_channel = 1146975282373349417
 admin_tier_submit = 1146977130324955278
 prompt_submission_channel = 1147236436295303210
 admin_prompt_submission_channel = 1147236457552019498
+db_backup_channel = 1147278178247782491
 upvote_reaction   = "✅"
 downvote_reaction = "🔴"
 neutral_reaction  = "❕"
