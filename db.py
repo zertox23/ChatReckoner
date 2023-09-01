@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, ForeignKey, Column, String, Integer, CHAR
+from sqlalchemy import create_engine, ForeignKey, Column, String, Integer,DateTime
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -39,9 +39,22 @@ class DbStruct:
         __tablename__ = "tierpolls"
 
         id = Column("id",String,primary_key=True) # message link
-        voted_user = Column("voted_user",Integer,ForeignKey("members.id"))
-        upvotes    = Column("upvotes",Integer)
-        downvotes  = Column("upvotes",Integer)
+        voted_user = Column("voted_user",Integer,ForeignKey("members.user_id"))
+        votes    = Column("votes",Integer)
+        last_recorded = Column("last_recorded",Integer)
+
+        def __init__(self,message_id:str,voted_user:int):
+            self.id = message_id
+            self.votes = 0
+            self.voted_user = voted_user
+            self.last_recorded = 0
+        def __repr__(self):
+            return str({
+                "id":self.id,
+                "votes":self.votes,
+                "last_recorded":self.last_recorded,
+                "voted_user":self.voted_user
+            })
     
 class BotDb:
     def __init__(self) -> None: 
