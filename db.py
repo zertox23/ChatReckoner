@@ -40,27 +40,38 @@ class DbStruct:
         __tablename__ = "tierpolls"
 
         id = Column("id",String,primary_key=True) # message link
+        submitted_by = Column("submitted_by", Integer, ForeignKey("members.user_id"))
         voted_user = Column("voted_user",Integer,ForeignKey("members.user_id"))
         votes    = Column("votes",Integer)
+        upvotes = Column("upvotes",Integer)
+        downvotes = Column("downvotes",Integer)
         last_recorded = Column("last_recorded",Integer)
 
-        def __init__(self,message_id:str,voted_user:int):
+        def __init__(self,message_id:str,submitted_by:int,voted_user:int):
             self.id = message_id
             self.votes = 0
+            self.submitted_by = submitted_by
             self.voted_user = voted_user
             self.last_recorded = 0
+            self.downvotes = 0
+            self.upvotes = 0
         def __repr__(self):
             return str({
                 "id":self.id,
                 "votes":self.votes,
+                "submitted_by":self.submitted_by,
                 "last_recorded":self.last_recorded,
-                "voted_user":self.voted_user
+                "voted_user":self.voted_user,
+                "upvotes": self.upvotes,
+                "downvotes": self.downvotes
             })
 
     class discussion_ideas(Base):
         __tablename__ = "discussion_ideas"
         id       = Column("id", String, primary_key=True)  # message link
         votes    = Column("votes",Integer)
+        upvotes = Column("upvotes",Integer)
+        downvotes = Column("downvotes",Integer)
         submitted_by = Column("submitted_by",Integer,ForeignKey("members.user_id"))
         submittion_date = Column("submission_date", DateTime, default=datetime.datetime.utcnow)
 
@@ -68,6 +79,8 @@ class DbStruct:
             self.id = id
             self.submitted_by = submitted_by
             self.votes = votes
+            self.downvotes = 0
+            self.upvotes = 0
 
         def __repr__(self):
             return str({
@@ -75,6 +88,8 @@ class DbStruct:
                 "votes": self.votes,
                 "submitted_by":self.submitted_by,
                 "submission_date": self.submittion_date,
+                "upvotes": self.upvotes,
+                "downvotes": self.downvotes
             })
 
     

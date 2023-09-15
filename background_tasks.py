@@ -9,14 +9,14 @@ class BackgroundTasks(commands.Cog):
 
     def __init__(self,bot:discord.Client):
         self.bot = bot
-        self.check_votes.start()
+        self.check_rank.start()
         self.check_polls.start()
         self.update_users_votes.start()
         self.update_members.start()
         self.check_discussion_submissions.start()
         self.db_backup.start()
     def cog_unload(self) -> None:
-        self.check_votes.stop()
+        self.check_rank.stop()
         self.check_polls.stop()
         self.update_users_votes.stop()
         self.update_members.stop()
@@ -24,7 +24,7 @@ class BackgroundTasks(commands.Cog):
         self.db_backup.stop()
 
     @tasks.loop(seconds=2)
-    async def check_votes(self):
+    async def check_rank(self):
         print("Started. loop")
         results = session.query(DbStruct.member).order_by(DbStruct.member.votes.desc())
         for member in results:
@@ -82,17 +82,21 @@ class BackgroundTasks(commands.Cog):
         results = session.query(DbStruct.tierpolls).all()
         for poll in results:
             message = await self.bot.get_guild(Guild).get_channel(tier_submit_channel).fetch_message(poll.id)
+            upvotes = 0
+            downvotes = 0
             votes = 0
             for reaction in message.reactions:
-                ic(reaction.emoji)
                 if reaction.emoji == upvote_reaction:
+                    upvotes = reaction.count
                     votes += reaction.count
                 elif reaction.emoji == downvote_reaction:
                     votes -= reaction.count
+                    downvotes = reaction.count
                 else:
                     pass
             poll.votes = votes
-
+            poll.upvotes = upvotes
+            poll.downvotes = downvotes
             session.commit()
 
     @tasks.loop(seconds=2)
@@ -101,17 +105,21 @@ class BackgroundTasks(commands.Cog):
         results = session.query(DbStruct.discussion_ideas).all()
         for submission in results:
             message = await self.bot.get_guild(Guild).get_channel(prompt_submission_channel).fetch_message(submission.id)
+            upvotes = 0
+            downvotes = 0
             votes = 0
             for reaction in message.reactions:
-                ic(reaction.emoji)
                 if reaction.emoji == upvote_reaction:
+                    upvotes = reaction.count
                     votes += reaction.count
                 elif reaction.emoji == downvote_reaction:
                     votes -= reaction.count
+                    downvotes = reaction.count
                 else:
                     pass
             submission.votes = votes
-
+            submission.downvotes = downvotes
+            submission.upvotes = upvotes
             session.commit()
 
     @tasks.loop(seconds=2)
@@ -132,7 +140,6 @@ class BackgroundTasks(commands.Cog):
             for role in roles:
                 if role.name in tiers:
                     rank = str(role.name)
-                    ic(rank)
                     break
                 else:
                     rank = "Not Applied"
@@ -149,9 +156,7 @@ class BackgroundTasks(commands.Cog):
             mem = session.query(DbStruct.member).filter(DbStruct.member.user_id == discord_id).first()
 
             if mem:
-                ic(mem)
                 if mem == member:
-                    ic("mem = member")
                     pass
                 else:
                     mem.username = usermame
@@ -165,7 +170,6 @@ class BackgroundTasks(commands.Cog):
     async def db_backup(self):
         time.sleep(5)
         try:
-            ic("Uploading Backup")
             channel = self.bot.get_channel(db_backup_channel)
             await channel.send(file=discord.File('database.db'))
         except Exception as e:

@@ -7,6 +7,8 @@ from icecream import ic
 from db import BotDb,DbStruct
 from Exceptions import Chtrc_Error
 from Config import Guild,tiers
+from funks import create_embed
+import asyncio
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
@@ -73,8 +75,10 @@ class utils:
         if mem:
             if increment:
                 mem.votes += n
+                ic(f"{mem}, Inceremented {n} votes")
             else:
                 mem.votes -= n
+                ic(f"{mem}, decremented {n} votes")
             session.commit()
             return True
         else:
@@ -88,6 +92,7 @@ async def on_ready():
     await bot.load_extension("background_tasks")
     await bot.load_extension("rankpoll")
     await bot.load_extension("discussions")
+    await bot.load_extension("administration")
     try:
         synced = await bot.tree.sync()
         print(f"synced {len(synced)} command[s]")
@@ -102,22 +107,27 @@ async def on_message(message):
 async def update_members(interaction: discord.Interaction):
         try:
             utils.update_members()
+            await interaction.response.defer()
+            await interaction.followup.send(embed=create_embed(" ","Success server status updated",color=discord.Color.green()))
         except Exception as e:
             logger.error(str(e))
 
 @bot.tree.command(name="increment_votes")
 @app_commands.describe(user="user to add votes to",n="how many votes to add")
 @commands.has_permissions(administrator = True)
-async def increment_votes(interaction: discord.Interaction,user:discord.Member,n:int):
-    try:
-        res = utils.dec_increment_votes(user.id,n,True)
-        if res:
-            await interaction.response.send_message(f"Success. Added {n} Votes to {user.mention}")
-        else:
-            await interaction.response.send_message(f"Failed.")
-    except Exception as e:
-        await interaction.response.send_message(f"Failed. {e}")
-
+async def increment_votes(interaction: discord.Interaction, user: discord.Member, n: int):
+        try:
+            res = utils.dec_increment_votes(user.id, n, True)
+            if res:
+                await interaction.response.defer()
+                await interaction.followup.send(embed=create_embed(" ", f"Success. Added {n} Votes to {user.mention}",
+                                                                   color=discord.Color.green()))
+            else:
+                await interaction.response.defer()
+                await interaction.followup.send(embed=create_embed("Error", "Failed.", color=discord.Color.red()))
+        except Exception as e:
+            await interaction.response.defer()
+            await interaction.followup.send(embed=create_embed("Error", f"Failed,{str(e)}", color=discord.Color.red()))
 @bot.tree.command(name="decrement_votes")
 @app_commands.describe(user="user to add votes to",n="how many votes to add")
 @commands.has_permissions(administrator = True)
@@ -125,11 +135,15 @@ async def decrement_votes(interaction: discord.Interaction,user:discord.Member,n
     try:
         res = utils.dec_increment_votes(user.id,n,False)
         if res:
-            await interaction.response.send_message(f"Success. Removed {n} Votes to {user.mention}")
+            await interaction.response.defer()
+            await interaction.followup.send(embed=create_embed(" ",f"Success. Removed {n} Votes to {user.mention}",color=discord.Color.green()))
         else:
-            await interaction.response.send_message(f"Failed.")
+            await interaction.response.defer()
+            await interaction.followup.send(embed=create_embed("Error","Failed.",color=discord.Color.red()))
     except Exception as e:
-        await interaction.response.send_message(f"Failed. {e}")
+        await interaction.response.defer()
+        await interaction.followup.send(embed=create_embed("Error", f"Failed,{str(e)}", color=discord.Color.red()))
+
 
 @bot.tree.command(name="derank")
 @app_commands.describe(user="user to derank")
@@ -149,12 +163,14 @@ async def derank(interaction:discord.Interaction,user:discord.Member):
                     tiers[next_role_index])))  # Give lower Rank
                 await dis_member.remove_roles(discord.utils.get(bot.get_guild(Guild).roles, name=str(
                     tiers[current_role_index])))  # Remove last Rank
-                await interaction.response.send_message(f"Deranked {user.mention} successfully")
+                await interaction.response.defer()
+                await interaction.followup.send(embed=create_embed(" ",f"Deranked {user.mention} successfully",color=discord.Color.green()))
+
 
 @bot.tree.command(name="uprank")
 @app_commands.describe(user="user to uprank")
 @commands.has_permissions(administrator=True)
-async def uprank(interaction:discord.Interaction,user:discord.Member):
+async  def uprank(interaction:discord.Interaction,user:discord.Member):
     dis_member = bot.get_guild(Guild).get_member(user.id)
     roles = dis_member.roles
     for role in roles:
@@ -169,8 +185,8 @@ async def uprank(interaction:discord.Interaction,user:discord.Member):
                                                              name=str(tiers[next_role_index])))  # Give Next Rank
                 await dis_member.remove_roles(discord.utils.get(bot.get_guild(Guild).roles, name=str(
                     tiers[current_role_index])))  # Remove last Rank
-                await interaction.response.send_message(f"upranked {user.mention} successfully")
-
+                await interaction.response.defer()
+                await interaction.followup.send(embed=create_embed(" ", f"upranked {user.mention} successfully",color=discord.Color.green()))
 
 @bot.tree.command(name="show_user_info")
 @app_commands.describe(user="user to display info of")
@@ -183,9 +199,14 @@ async def show_user_info(interaction:discord.Interaction,user:discord.Member):
         embed.add_field(name="Rank",value=str(member.rank), inline=False)
         embed.add_field(name="Current Votes",value=str(member.votes), inline=False)
         embed.add_field(name="messages Sent",value=str(member.messages_sent), inline=False)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.defer()
+        #asyncio.sleep()
+        await interaction.followup.send(embed=embed)
     else:
-        await interaction.response.send_message(f"User Not Found 404")
+        await interaction.response.defer()
+        await interaction.followup.send(f"User Not Found 404")
+
+
 
 
 
@@ -194,4 +215,4 @@ class Ranks:
         pass
 
 
-bot.run("TOKEN")
+bot.run("MTE0NjY1MDQwNTQ2ODY0MzQyOA.GPM6H9._fS2VDBPqLDFuNQyXtRJMSLtrRKgc07rwveKdQ")
