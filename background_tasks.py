@@ -1,13 +1,15 @@
 import discord
-from discord.ext import commands,tasks
-from db import  DbStruct,BotDb
+from discord.ext import commands, tasks
+from db import DbStruct, BotDb
 from Config import *
+
 session = BotDb().session
 from icecream import ic
 import time
-class BackgroundTasks(commands.Cog):
 
-    def __init__(self,bot:discord.Client):
+
+class BackgroundTasks(commands.Cog):
+    def __init__(self, bot: discord.Client):
         self.bot = bot
         self.check_rank.start()
         self.check_polls.start()
@@ -15,6 +17,7 @@ class BackgroundTasks(commands.Cog):
         self.update_members.start()
         self.check_discussion_submissions.start()
         self.db_backup.start()
+
     def cog_unload(self) -> None:
         self.check_rank.stop()
         self.check_polls.stop()
@@ -28,7 +31,7 @@ class BackgroundTasks(commands.Cog):
         print("Started. loop")
         results = session.query(DbStruct.member).order_by(DbStruct.member.votes.desc())
         for member in results:
-            #["Tier 0","Tier F","Tier 1",'Tier 2','Tier 3']
+            # ["Tier 0","Tier F","Tier 1",'Tier 2','Tier 3']
             if member.votes >= rank_up_level:
                 dis_member = self.bot.get_guild(Guild).get_member(member.user_id)
                 roles = dis_member.roles
@@ -36,12 +39,22 @@ class BackgroundTasks(commands.Cog):
                     if role.name in tiers:
                         rank = str(role.name)
                         current_role_index = tiers.index(str(rank))
-                        next_role_index    = current_role_index+1
+                        next_role_index = current_role_index + 1
                         if len(tiers) <= next_role_index:
                             pass
                         else:
-                            await dis_member.add_roles(discord.utils.get(self.bot.get_guild(Guild).roles, name=str(tiers[next_role_index]))) # Give Next Rank
-                            await dis_member.remove_roles(discord.utils.get(self.bot.get_guild(Guild).roles, name=str(tiers[current_role_index]))) # Remove last Rank
+                            await dis_member.add_roles(
+                                discord.utils.get(
+                                    self.bot.get_guild(Guild).roles,
+                                    name=str(tiers[next_role_index]),
+                                )
+                            )  # Give Next Rank
+                            await dis_member.remove_roles(
+                                discord.utils.get(
+                                    self.bot.get_guild(Guild).roles,
+                                    name=str(tiers[current_role_index]),
+                                )
+                            )  # Remove last Rank
                             member.votes -= rank_up_level
                             member.rank = str(tiers[next_role_index])
                             session.commit()
@@ -61,10 +74,18 @@ class BackgroundTasks(commands.Cog):
                         if next_role_index < 0:
                             pass
                         else:
-                            await dis_member.add_roles(discord.utils.get(self.bot.get_guild(Guild).roles, name=str(
-                                tiers[next_role_index])))  # Give lower Rank
-                            await dis_member.remove_roles(discord.utils.get(self.bot.get_guild(Guild).roles, name=str(
-                                tiers[current_role_index])))  # Remove last Rank
+                            await dis_member.add_roles(
+                                discord.utils.get(
+                                    self.bot.get_guild(Guild).roles,
+                                    name=str(tiers[next_role_index]),
+                                )
+                            )  # Give lower Rank
+                            await dis_member.remove_roles(
+                                discord.utils.get(
+                                    self.bot.get_guild(Guild).roles,
+                                    name=str(tiers[current_role_index]),
+                                )
+                            )  # Remove last Rank
                             member.votes += rank_up_level
                             member.rank = str(tiers[next_role_index])
                             session.commit()
@@ -74,14 +95,16 @@ class BackgroundTasks(commands.Cog):
 
                 session.commit()
 
-
-
     @tasks.loop(seconds=2)
     async def check_polls(self):
-        #get all polls
+        # get all polls
         results = session.query(DbStruct.tierpolls).all()
         for poll in results:
-            message = await self.bot.get_guild(Guild).get_channel(tier_submit_channel).fetch_message(poll.id)
+            message = (
+                await self.bot.get_guild(Guild)
+                .get_channel(tier_submit_channel)
+                .fetch_message(poll.id)
+            )
             upvotes = 0
             downvotes = 0
             votes = 0
@@ -104,7 +127,11 @@ class BackgroundTasks(commands.Cog):
         # get all polls
         results = session.query(DbStruct.discussion_ideas).all()
         for submission in results:
-            message = await self.bot.get_guild(Guild).get_channel(prompt_submission_channel).fetch_message(submission.id)
+            message = (
+                await self.bot.get_guild(Guild)
+                .get_channel(prompt_submission_channel)
+                .fetch_message(submission.id)
+            )
             upvotes = 0
             downvotes = 0
             votes = 0
@@ -126,7 +153,11 @@ class BackgroundTasks(commands.Cog):
     async def update_users_votes(self):
         results = session.query(DbStruct.tierpolls).all()
         for poll in results:
-            member = session.query(DbStruct.member).filter(DbStruct.member.user_id == poll.voted_user).first()
+            member = (
+                session.query(DbStruct.member)
+                .filter(DbStruct.member.user_id == poll.voted_user)
+                .first()
+            )
             if member:
                 member.votes -= poll.last_recorded
                 member.votes += poll.votes
@@ -153,7 +184,11 @@ class BackgroundTasks(commands.Cog):
             usermame = item[discord_id]["username"]
             role = item[discord_id]["rank"]
             member = DbStruct.member(int(discord_id), str(usermame), str(role), 0, 0)
-            mem = session.query(DbStruct.member).filter(DbStruct.member.user_id == discord_id).first()
+            mem = (
+                session.query(DbStruct.member)
+                .filter(DbStruct.member.user_id == discord_id)
+                .first()
+            )
 
             if mem:
                 if mem == member:
@@ -171,11 +206,10 @@ class BackgroundTasks(commands.Cog):
         time.sleep(5)
         try:
             channel = self.bot.get_channel(db_backup_channel)
-            await channel.send(file=discord.File('database.db'))
+            await channel.send(file=discord.File("database.db"))
         except Exception as e:
             ic("Error uploading backup:", e)
 
 
 async def setup(bot):
     await bot.add_cog(BackgroundTasks(bot))
-
