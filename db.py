@@ -44,6 +44,7 @@ class DbStruct:
 
         # id = Column("id", String, primary_key=True)  # message link
         submitted_by = Column("submitted_by", Integer, ForeignKey("members.user_id"),primary_key=True)
+        id   = Column("id",String)
         voted_user = Column("voted_user", Integer, ForeignKey("members.user_id"))
         votes = Column("votes", Integer)
         upvotes = Column("upvotes", Integer)

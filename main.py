@@ -9,8 +9,11 @@ from Exceptions import Chtrc_Error
 from Exceptions import Chtrc_Error
 from Config import Guild, tiers
 from funks import create_embed
-import asyncio
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+TOKEN = os.environ.get("token")
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
@@ -61,7 +64,7 @@ class utils:
                 session.add(member)
                 session.commit()
 
-    def incr_messages(discord_id: int, n: int = 1) -> bool:
+    def increment_messages(discord_id: int, n: int = 1) -> bool:
         mem = (
             session.query(DbStruct.member)
             .filter(DbStruct.member.user_id == discord_id)
@@ -284,4 +287,4 @@ class Ranks:
         pass
 
 
-bot.run("TOKEN")
+bot.run(TOKEN)
